@@ -3,24 +3,38 @@ To play with a particular solution:
     python3 play.py <word>
 
 
-To run for every possible solution in wordlist.txt:
+To run for every possible solution in wordlist.txt and show statistics:
 
     python3 play.py
 
 
 # How this works:
 
-At the beginning of a game of Wordle, the list of possible solutions is the entire wordlist from wordlist.txt (grabbed from the javascript source of Wordle pre-NYT purchase). After each guess, the resulting grade allows us to cross a number of words off of this list for the next round.
+At the beginning of a game of Wordle, the list of possible solutions is the entire wordlist from wordlist.txt (grabbed from the javascript source of Wordle pre-NYT purchase). After each guess, the resulting grade allows us to cross a number of words off of this list for the next round. The more words we can rule out, the better the guess was.
 
-For a particular guess, there are a number of possible grades based on the 
+At each stage we should pick the guess that, on average across all solutions that are still possible, leaves us with the smallest wordlist for the next round. I'm assuming that each possible solution is equally probability.
 
+All this takes a long time to calculate, so I generated a "strategy tree" representing guesses for all possible games. Each node has a guess, and a child for every possible grade for that guess pointing to a sub-strategy for the rest of the game. It takes <4 minutes to generate the strategy tree on my computer, and the resulting json file is about .5 MB.
 
-# Tricks
+# How good is it?
 
-I found that while grading is fast for one word, doing it len(wordlist) * len(wordlist) times is very slow. I pre-computed 
+This strategy can solve 99.68% of the possible Wordles in under 6 guesses. The average number of guesses is ~4.25.
 
-    python3 generate_grades.py
+# Grading
 
+In grades.py I designated GRAY = 0, YELLOW = 1, and GREEN = 2. I created a Grade class, primarily so that I could define a hash function for it and use it as a key in dictionaries.
+
+The actual grading was a little trickier than I thought! For example, if the solution is "abyss" and I guess "sissy":
+
+- The last 's' in my guess is green, because it's the right letter in the right place
+- The first 's' in my guess is yellow, because it's the right letter in the wrong place
+- The second 's' in my guess is gray! The first 's' corresponds to the last 's' in abyss and there are no 's's left for this tile.
+
+I found that while grading is fast for one word, doing it len(wordlist) * len(wordlist) times is very slow. Pre-computing grades speeds things up considerably. Running
+
+    python3 grades.py
+
+... will create a 2d list "grades" where grade[guess_index][solution_index] is the hash of the resulting grade, and dump it to "grades.json". This format is a little convoluted but makes "grades.json" compact (~600 MB). It takes about 16 minutes to generate on my computer, and about 10 seconds to load from the finished json file into memory in a python script.
 
 # Some other strategies:
 
@@ -36,22 +50,10 @@ Start with the wordlist as a list of possible solutions. Until we've found the s
 
 Since this solution involves randomness, running this script without arguments will try each possible solution 5 times and show statistics on the results.
 
+This strategy seems to have about 5/6 success rate.
 
 ## Pick 5 words that give you the highest probability of getting the sixth guess correctly
 
     python3 evolve_five_guesses.py
 
-This script will run until killed.
-
-
-
-
-For games with a random solution, where each guess is a random word from the
-list of remaining valid words, the computer wins ~5/6 of the time.
-
-
-For each possible guess, what is the expected number of turns it will take to
-find the solution?
-
-for each possible solution:
-  run each possible game??
+This script will run until killed. In each round it will keep the most successful word groups from the last round, introduce some one-word variations on them, and add some entirely new randomly generated strategies. I don't know very much about genetic algorithms and did not even try recombination, but was able to generate some strategies that had a 90% success rate.
