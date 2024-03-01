@@ -2,7 +2,6 @@ To play with a particular solution:
 
     python3 play.py <word>
 
-
 To run for every possible solution in wordlist.txt and show statistics:
 
     python3 play.py
@@ -12,13 +11,13 @@ To run for every possible solution in wordlist.txt and show statistics:
 
 At the beginning of a game of Wordle, the list of possible solutions is the entire wordlist from wordlist.txt (grabbed from the javascript source of Wordle pre-NYT purchase). After each guess, the resulting grade allows us to cross a number of words off of this list for the next round. The more words we can rule out, the better the guess was.
 
-At each stage we should pick the guess that, on average across all solutions that are still possible, leaves us with the smallest wordlist for the next round. I'm assuming that each possible solution is equally probability.
+At each stage we should pick the guess that, on average across all solutions that are still possible, leaves us with the smallest wordlist for the next round. I'm assuming that each possible solution is equally probable.
 
-All this takes a long time to calculate, so I generated a "strategy tree" representing guesses for all possible games. Each node has a guess, and a child for every possible grade for that guess pointing to a sub-strategy for the rest of the game. It takes <4 minutes to generate the strategy tree on my computer, and the resulting json file is about .5 MB.
+All this takes a while to calculate, so I generated a "strategy tree" representing guesses for all possible games. Each node has a guess, and a child for every possible grade for that guess pointing to a sub-strategy for the rest of the game. It takes <4 minutes to generate the strategy tree on my computer, and the resulting json file is about .5 MB.
 
 # How good is it?
 
-This strategy can solve 99.68% of the possible Wordles in under 6 guesses. The average number of guesses is ~4.25.
+This strategy can solve 99.68% of the possible Wordles in 6 guesses or less. The average number of guesses is ~4.25.
 
 # Grading
 
@@ -34,7 +33,7 @@ I found that while grading is fast for one word, doing it len(wordlist) * len(wo
 
     python3 grades.py
 
-... will create a 2d list "grades" where grade[guess_index][solution_index] is the hash of the resulting grade, and dump it to "grades.json". This format is a little convoluted but makes "grades.json" compact (~600 MB). It takes about 16 minutes to generate on my computer, and about 10 seconds to load from the finished json file into memory in a python script.
+... will create a 2d list "grades" where grade[guess_index][solution_index] is the hash of the resulting grade, and dump it to "grades.json". This format is a little convoluted but makes "grades.json" more compact (~600 MB). It takes about 16 minutes to generate on my computer, and about 10 seconds to load from the finished json file into memory in a python script.
 
 # Some other strategies:
 

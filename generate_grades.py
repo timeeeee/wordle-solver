@@ -13,8 +13,32 @@ GREEN = 2
 
 
 class Grade(list):
+    def __init__(self, values_or_hash):
+        try:
+            super().__init__(values_or_hash)
+        except TypeError:
+            # if it's a hash, "'int' object is not iterable"
+            # ... so reverse engineer values
+            _hash = values_or_hash
+            values = []
+            for _ in range(5):
+                values.append(_hash % 3)
+                _hash //= 3
+
+            super().__init__(values)
+
     def __hash__(self):
         return sum(self[i] * 3**i for i in range(5))
+
+
+class TestGradeClass(unittest.TestCase):
+    def test_hash_is_reversible(self):
+        import itertools
+        
+        for grade in itertools.product(*[range(3) for _ in range(5)]):
+            original_grade = Grade(grade)
+            hash_grade = Grade(hash(original_grade))
+            self.assertListEqual(original_grade, hash_grade)
             
 
 def grade(guess, actual):
@@ -54,7 +78,7 @@ def grade(guess, actual):
     return result
 
 
-class TestGrade(unittest.TestCase):
+class TestGradeFunction(unittest.TestCase):
     def test_abyss_booby(self):
         self.assertListEqual(grade("abyss", "booby"), [GRAY, YELLOW, YELLOW, GRAY, GRAY])
 
@@ -71,5 +95,5 @@ class TestGrade(unittest.TestCase):
 if __name__ == "__main__":
     grades = [[hash(grade(guess, solution)) for solution in wordlist] for guess in wordlist]
 
-    with open("grades2.json", "w") as f:
+    with open("grades.json", "w") as f:
         json.dump(grades, f)

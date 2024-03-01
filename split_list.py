@@ -27,7 +27,7 @@ YELLOW = 1
 GREEN = 2
 
 
-def pick_guess_max(words_left):
+def pick_guess_max(words_left, blacklist=set([])):
     # "score" means max number of words possible in the potential next wordlists after a guess
     max_best_score = math.inf
     max_best_guess = None
@@ -39,7 +39,7 @@ def pick_guess_max(words_left):
 
         # use max
         worst_count = max(next_wordlist_counts.values())
-        if worst_count < max_best_score:
+        if worst_count < max_best_score and guess not in blacklist:
             max_best_score = worst_count
             max_best_guess = guess
 
@@ -65,8 +65,8 @@ def pick_guess_expected(words_left):
     return best_guess
 
 
-def pick_guess(words_left):
-    return pick_guess_max(words_left)
+def pick_guess(words_left, blacklist=set([])):
+    return pick_guess_max(words_left, blacklist=blacklist)
 
 
 def build_strategy_max(valid_words, depth=0, debug=False):

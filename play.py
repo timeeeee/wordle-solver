@@ -13,13 +13,6 @@ from collections import Counter
 with open("wordlist.txt") as f:
     wordlist = [line.strip() for line in f]
 
-# with open("grades.json") as f:
-#     grades = json.load(f)
-
-# with open("tree.pkl", "rb") as f:
-#     tree = pickle.load(f)
-
-
 
 GRAY = 0
 YELLOW = 1
@@ -85,25 +78,35 @@ def play_wordle(solution, tree):
 
 
 if __name__ == "__main__":
-    with open("strategy_expected.json") as f:
+    with open("strategy.json") as f:
         tree = json.load(f)
 
+    # if there is an argument, play wordle with it. Otherwise play all possible
+    # games and show statistics
     if len(argv) == 2:
-        print(play_wordle(argv[1], tree))
-
-    histogram = [0 for _ in range(10)]
-    double_histogram = [0 for _ in range(10)]
-    for word in wordlist:
-        count = len(play_wordle(word, tree))
-        if len(set(word)) == 5:
+        guesses = play_wordle(argv[1], tree)
+        print(f"guesses: {', '.join(guesses)}")
+    else:
+        histogram = [0 for _ in range(10)]
+        lost_words = []
+        for word in wordlist:
+            count = len(play_wordle(word, tree))
             histogram[count] += 1
-        else:
-            double_histogram[count] += 1
+            if count > 6:
+                lost_words.append(word)
 
-    print("no doubles:")
-    print(histogram)
-    print(f"(average = {sum(i * x for i, x in enumerate(histogram)) / sum(histogram)})")
-    print()
-    print("doubles:")
-    print(double_histogram)
-    print(f"(average = {sum(i * x for i, x in enumerate(double_histogram)) / sum(double_histogram)})")
+        max_guesses = max(i for i, count in enumerate(histogram) if count > 0)
+        print(f"Out of {len(wordlist)} games:")
+        for count in range(1, max_guesses + 1):
+            print(f"{count} guesses: {histogram[count]} games")
+        print()
+
+        average = sum(i * count for i, count in enumerate(histogram)) / sum(histogram)
+        print(f"average guesses: {average}")
+        print()
+
+        won = sum(count for i, count in enumerate(histogram) if i <= 6)
+        print(f"won {won} / {len(wordlist)} games")
+        print()
+
+        print(f"failed for words {', '.join(lost_words)}")
